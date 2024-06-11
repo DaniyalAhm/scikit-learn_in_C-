@@ -16,4 +16,4 @@ This project aims to implement core machine learning algorithms from scratch usi
 - [Eigen](http://eigen.tuxfamily.org/dox/) library for linear algebra operations
 - CMake for building the project
 
-## Project Structure
+## This Project is still in Development

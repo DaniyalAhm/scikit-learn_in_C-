@@ -16,6 +16,7 @@ This repository contains implementations of various machine learning algorithms 
 
 3. **Naive Bayes**
     - Multinomial Naive Bayes
+    - Binary Naive Bayes
     
 
 ## Dependencies

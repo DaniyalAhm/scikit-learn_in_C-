@@ -18,7 +18,7 @@ struct VectorHash {
 };
 using namespace std;
 using Document = vector<string>; // Each document is a vector of words
-class BinaryBayes{
+class MultinomialBayes{
 
     vector<vector<string>> X_train; // Correct type
     Eigen:: VectorXd y_train;

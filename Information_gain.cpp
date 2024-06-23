@@ -51,11 +51,5 @@ Class: Information Gain
     Function Calculate MaxinfoGain(Remaining Unsplit_data):
         For each feature X in unsplit data:
             calculate the info gain and return the Max info gain
-        
-
-
-
-
-
 
 */

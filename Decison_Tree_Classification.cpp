@@ -22,13 +22,21 @@ class Decision_Tree {
     Eigen::VectorXd y_train;
     unordered_map<int, vector<vector<string>>> combined_data;
     int Max_depth;
+    typedef double (*FunctionPtr)(int, int);
+    std::function<double(const std::vector<std::vector<std::string>>&, const Eigen::VectorXd&)> Split_function;
+
+
+
 
 public:
-    Decision_Tree(vector<vector<string>> X_train, Eigen::VectorXd y_train, int Max_depth = -1, string Splitting_function = "Information_Gain", int Min_depth = -1) {
+    Decision_Tree(vector<vector<string>> X_train, Eigen::VectorXd y_train, int Max_depth = -1, string Splitting_function = "Information_Gain", int Min_depth = -1,std::function<double(const std::vector<std::vector<std::string>>&, const Eigen::VectorXd&)> Splitting_function = Gini
+) {
         this->X_train = X_train;
         this->y_train = y_train;
         combine_data();
         this->Max_depth = Max_depth;
+        this->Split_function= Split_function
+
     }
 
 private:
@@ -79,8 +87,8 @@ public:
             
 
             vector<vector<string>> best_split = Find_best_possible_split(, );
-            left_node = best_split[0]; // ! This assumes `best_split` is a 2D vector of strings, needs to be adjusted
-            right_node = best_split[1];
+            left_node = Node()// ! This assumes `best_split` is a 2D vector of strings, needs to be adjusted
+            right_node = Node()
 
 
             node.attach_left(Fit(left_node, depth + 1, node_y)); // ! `attach_left` is not defined, nor is `node`
@@ -94,14 +102,17 @@ public:
 
 
 
-    vector<Node*, Node*> Find_best_possible_split(node, bool is_leaf) { // ! Missing parameter types
+    vector<double, vector< pair <int, int>,  pair <int, int> >> Find_best_possible_split(node, bool is_leaf) { // ! Missing parameter types
         pair<int, int> thresholds=node.split;
         int class_ = y_train[thresholds.first];
-        int best_gain =0;
-        int gain = 0;
+        double best_gain =0;
+        double gain = 0;
         pair <int, int> new_left_threshold;
         pair <int, int> new_right_threshold;
 
+
+
+        vector<double, vector< pair <int, int>,  pair <int, int> >> result;
         for (int i = thresholds.first; i < thresholds.second;i++ ){
             for (int j = 0; j< X_train[i].size(); j++){ //? All the values in that feature column
                 new_left_threshold= <0, j-1>;
@@ -110,8 +121,13 @@ public:
 
 
                 //!Add Support function...
+                    gain = Split_function(X_train,new_left_threshold,new_right_threshold )
+                    if(j!=-1 and gain > best_gain){
+                        result[0]= best_grain;
+                        
+                        result[1]= vector<new_left_threshold,new_right_threshold>;
 
-
+                    }
 
                 }
                     
@@ -123,6 +139,7 @@ public:
             }
 
         }
+        return result;
 
 
 

@@ -9,34 +9,27 @@ using namespace std;
 
 struct Node {
     bool is_leaf;
-    Node* parent;
+    Node* left;
+    Node* right; 
     pair<int, int> split; // X_train start index and ending index
-    Node(bool is_leaf, Node* parent = nullptr,    pair<int, int> split) 
-        : is_leaf(is_leaf), parent(parent), pair(pair) {}
+    Node(bool is_leaf, Node* left = nullptr, Node* right = nullptr, pair<int, int> split) 
+        : is_leaf(is_leaf), left(left), right(right), split(split) {} //? FIXED
 };
-
-
 
 class Decision_Tree {
     vector<vector<string>> X_train; // Correct type
     Eigen::VectorXd y_train;
     unordered_map<int, vector<vector<string>>> combined_data;
     int Max_depth;
-    typedef double (*FunctionPtr)(int, int);
-    std::function<double(const std::vector<std::vector<std::string>>&, const Eigen::VectorXd&)> Split_function;
-
-
-
+    std::function<double(const vector<vector<string>>&, const pair<int, int>&, const pair<int, int>&)> Split_function;
 
 public:
-    Decision_Tree(vector<vector<string>> X_train, Eigen::VectorXd y_train, int Max_depth = -1, string Splitting_function = "Information_Gain", int Min_depth = -1,std::function<double(const std::vector<std::vector<std::string>>&, const Eigen::VectorXd&)> Splitting_function = Gini
-) {
+    Decision_Tree(vector<vector<string>> X_train, Eigen::VectorXd y_train, int Max_depth = -1, string Splitting_function = "Information_Gain", int Min_depth = -1, std::function<double(const std::vector<std::vector<std::string>>&, const Eigen::VectorXd&)> Split_function = Gini) { // ! Add comma and correct the Gini function definition
         this->X_train = X_train;
         this->y_train = y_train;
         combine_data();
         this->Max_depth = Max_depth;
-        this->Split_function= Split_function
-
+        this->Split_function = Split_function; 
     }
 
 private:
@@ -60,153 +53,112 @@ private:
         }
     }
 
-    bool is_pure(Node node) { // ! Function should return bool
+    bool is_pure(Node node) { 
         // Checks if the label of all the data points in the dataset are the same
-        pair<int, int> thresholds=node.split;
+        pair<int, int> thresholds = node.split;
         int class_ = y_train[thresholds.first];
-        for (int i = thresholds.first; i < thresholds.second;i++ ){
-                if(class_ != y_train[i]){
-                    return false;
-                }
-            return true;
+        for (int i = thresholds.first; i < thresholds.second; i++) {
+            if (class_ != y_train[i]) {
+                return false;
+            }
+        }
+        return true;
+    };
 
-        };
-
-
-
-public:
-    Node Fit_Private(node, int depth) {
-        if (is_pure(node)) { // ! Function `is_pure` expects data, not a node
-            return node; // ! `return node;` does not match the return type `void`
+private:
+    Node* Fit_Private(Node* currentNode, int depth) { 
+        if (is_pure(*currentNode)) { 
+            currentNode->is_leaf = true;
+            return currentNode; 
         }
 
         if (depth == Max_depth) {
-            return node; // ! `return node;` does not match the return type `void`
+            currentNode->is_leaf = true; 
+            return currentNode; 
         } else {
+           pair<pair<int, int>, pair<int, int>> best_split = Find_best_possible_split(currentNode); // ! Adjust the call to Find_best_possible_split
+            Node* left_node = new Node(false, nullptr, nullptr, best_split.first); 
+            Node* right_node = new Node(false, nullptr, nullptr, best_split.second);
 
-            
-
-            vector<vector<string>> best_split = Find_best_possible_split(, );
-            left_node = Node()// ! This assumes `best_split` is a 2D vector of strings, needs to be adjusted
-            right_node = Node()
-
-
-            node.attach_left(Fit(left_node, depth + 1, node_y)); // ! `attach_left` is not defined, nor is `node`
-            node.attach_right(Fit(right_node, depth + 1, node_y)); // ! `attach_right` is not defined, nor is `node`
+            currentNode->left = Fit_Private(left_node, depth + 1); 
+            currentNode->right = Fit_Private(right_node, depth + 1);
         }
+        return currentNode; 
     }
 
-
-
-
-
-
-
-    vector<double, vector< pair <int, int>,  pair <int, int> >> Find_best_possible_split(node, bool is_leaf) { // ! Missing parameter types
-        pair<int, int> thresholds=node.split;
+    pair<pair<int, int>, pair<int, int>> Find_best_possible_split(Node* node) { 
+        pair<int, int> thresholds = node->split; 
         int class_ = y_train[thresholds.first];
-        double best_gain =0;
+        double best_gain = 0;
         double gain = 0;
-        pair <int, int> new_left_threshold;
-        pair <int, int> new_right_threshold;
+        pair<int, int> new_left_threshold;
+        pair<int, int> new_right_threshold;
 
+       pair<pair<int, int>, pair<int, int>> result; 
+        for (int i = thresholds.first; i < thresholds.second; i++) {
+            for (int j = 0; j < X_train[i].size(); j++) { // Iterate over all values in that feature column
+                new_left_threshold = make_pair(0, j - 1);
+                new_right_threshold = make_pair(j, X_train[i].size() - 1);
 
-
-        vector<double, vector< pair <int, int>,  pair <int, int> >> result;
-        for (int i = thresholds.first; i < thresholds.second;i++ ){
-            for (int j = 0; j< X_train[i].size(); j++){ //? All the values in that feature column
-                new_left_threshold= <0, j-1>;
-                new_right_threshold = <j, X_train[i].size()-1;>
-
-
-
-                //!Add Support function...
-                    gain = Split_function(X_train,new_left_threshold,new_right_threshold )
-                    if(j!=-1 and gain > best_gain){
-                        result[0]= best_grain;
-                        
-                        result[1]= vector<new_left_threshold,new_right_threshold>;
-
-                    }
-
+                gain = Split_function(X_train, new_left_threshold, new_right_threshold); 
+                    best_gain = gain;
+                    result.first = new_left_threshold;
+                    result.second = new_right_threshold;
                 }
-                    
-
-                
-
-                                
-
             }
-
-        }
+        
         return result;
-
-
-
-
-
-
-
-
 };
 
 
-/*
+public:
+     Eigen::VectorXd predict(vector<vector<string>> X_test){
+            //? Using the tree we can predict the values of our X_Test
+            
 
+
+    }
+
+/*
 PsuedoCode:
     Class Decision_Tree:
-        Root Node; //? This is to represent the entire dataset
-        Splitting_function; //? This is as it sounds
-        Max_depth; //? This is the max hieght of the tree
+        Root Node; // This is to represent the entire dataset
+        Splitting_function; // This is as it sounds
+        Max_depth; // This is the max height of the tree
         Min_depth
 
-        Constructor (Max_depth = -1, Spliting_function="Information_Gain", Dataset, Min_depth=-1):
+        Constructor (Max_depth = -1, Splitting_function="Information_Gain", Dataset, Min_depth=-1):
             Root Node = Dataset
-        
-
-
-
-
 
         Fit_on_Data(Max depth, i, node):
-            if node is Pure; I.e If the remaining set of data represented by that node belongs to the same class :
+            if node is Pure; I.e If the remaining set of data represented by that node belongs to the same class:
                 return node
 
             if(i == Max Depth):
                 return node
 
             else:
-                children=Find_best_possible_split(node)
-                
+                children = Find_best_possible_split(node)
 
                 node.attach_left(left_node)
                 node.attach_right(right_node)
 
             return node
 
+        Predict(X_test) {}
 
-        Predict(X_test){
-    
-        
-        }
-
-        
         Find_best_possible_split(node):
             for attribute in Node:
-                thresold = all_unique_vals([X:attribute]) //? Select all values in that feature column
-                    for threshold in tresholds:
-                        Left_of_threshold //? This is left values of the threshold
-                        Right_of_threshold //?  This is the right values of the threshold
+                threshold = all_unique_vals([X:attribute]) // Select all values in that feature column
+                    for threshold in thresholds:
+                        Left_of_threshold // This is left values of the threshold
+                        Right_of_threshold // This is the right values of the threshold
 
-                        if len(left_of_threshold !=0 ) and Right_of_threshold !=0"
-                            gain = Support_function(y, left_indices, right_indices) //? Whether that be gini or info gain
+                        if len(left_of_threshold != 0) and len(Right_of_threshold != 0):
+                            gain = Support_function(y, left_indices, right_indices) // Whether that be gini or info gain
                                   if gain > best_gain:
                                     best_gain = gain
                                     best_split = (feature_index, threshold)
             return best_split and best_gain
-
-                        
-
-
 */
-
+};

@@ -17,10 +17,11 @@ This repository contains implementations of various machine learning algorithms 
 3. **Naive Bayes**
     - Multinomial Naive Bayes
     - Binary Naive Bayes
-4. **Decision Trees**
+4. **Decision Trees (Classification)**
     - Gini Index
     - Information Gain
-
+5. **Decision Trees (Regression)**
+    - Mean Square Error
 ## Dependencies
 
 - [Eigen](http://eigen.tuxfamily.org/dox/GettingStarted.html) - A C++ template library for linear algebra.
@@ -40,8 +41,5 @@ This repository contains implementations of various machine learning algorithms 
     sudo apt-get install libboost-all-dev
     ```
 
-## Usage
-
-### Linear Regression
 
 

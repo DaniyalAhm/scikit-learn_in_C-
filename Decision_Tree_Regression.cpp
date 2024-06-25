@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <string>
 #include <boost/algorithm/string.hpp>
-
+#include <set>
 using namespace std;
 
 struct Node {
@@ -80,33 +80,55 @@ private:
         return currentNode; 
     }
 
-    pair<pair<int, int>, pair<int, int>> Find_best_possible_split(Node* node) { 
-        pair<int, int> thresholds = node->split; 
-        double best_gain = 0;
-        double gain = 0;
-        pair<int, int> new_left_threshold;
-        pair<int, int> new_right_threshold;
+pair<pair<int, int>, pair<int, int>> Find_best_possible_split(Node* node) {
+    pair<int, int> thresholds = node->split; 
+    double best_gain = numeric_limits<double>::lowest();
+    double gain = 0;
+    pair<int, int> new_left_threshold;
+    pair<int, int> new_right_threshold;
+    pair<pair<int, int>, pair<int, int>> result; 
 
-        pair<pair<int, int>, pair<int, int>> result; 
+    // Iterate over all features
+    for (int feature_index = 0; feature_index < X_train[0].size(); feature_index++) { 
+        // Collect all unique values in this feature column
+        set<double> unique_values;
         for (int i = thresholds.first; i < thresholds.second; i++) {
-            for (int j = 0; j < X_train[i].size(); j++) { 
-                new_left_threshold = make_pair(thresholds.first, i - 1);
-                new_right_threshold = make_pair(i, thresholds.second);
+            unique_values.insert(stod(X_train[i][feature_index]));
+        }
+        
+        vector<double> values(unique_values.begin(), unique_values.end());
 
+        // Try splits at midpoints between successive unique values
+        for (int j = 0; j < values.size() - 1; j++) {
+            double split_value = (values[j] + values[j + 1]) / 2;
 
-                //? We use the mean square error to calculate the average distance between the two thresholds
-                //? the lower the mse, the better the split because that means it is more specific to the data
+            pair<int, int> left_indices = {thresholds.first, thresholds.first}; 
+            pair<int, int> right_indices = {thresholds.second, thresholds.second};
 
-                gain = split_gain(X_train, new_left_threshold, new_right_threshold); 
-                if (gain > best_gain) {
-                    best_gain = gain;
-                    result.first = new_left_threshold;
-                    result.second = new_right_threshold;
+            for (int i = thresholds.first; i < thresholds.second; i++) {
+                if (stod(X_train[i][feature_index]) < split_value) {
+                    left_indices.second++;
+                } else {
+                    right_indices.second--;
                 }
             }
+
+            // Skip if either side is empty
+            if (left_indices.first == left_indices.second || right_indices.first == right_indices.second) {
+                continue;
+            }
+
+            gain = split_gain(X_train, left_indices, right_indices); 
+            if (gain > best_gain) {
+                best_gain = gain;
+                result.first = left_indices;
+                result.second = right_indices;
+            }
         }
-        return result;
     }
+    return result;
+}
+
 
 private:
     double calculate_mean(Node* node) { 

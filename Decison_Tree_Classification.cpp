@@ -22,16 +22,15 @@ class Decision_Tree {
     Eigen::VectorXd y_train;
     unordered_map<int, vector<vector<string>>> combined_data;
     int Max_depth;
-    std::function<double(const vector<vector<string>>&, const pair<int, int>&, const pair<int, int>&)> Split_function;
     Node* Tree; 
-
+    string spliting_fuction = "Gini";
 public:
-    Decision_Tree(vector<vector<string>> X_train, Eigen::VectorXd y_train, int Max_depth = -1, string Splitting_function = "Information_Gain", int Min_depth = -1, std::function<double(const std::vector<std::vector<std::string>>&, const Eigen::VectorXd&)> Split_function = Gini) { // ! Add comma and correct the Gini function definition
+    Decision_Tree(vector<vector<string>> X_train, Eigen::VectorXd y_train, int Max_depth = -1, string Splitting_function = "Information_Gain", int Min_depth = -1, string spliting_fuction= "Gini" ) { // ! Add comma and correct the Gini function definition
         this->X_train = X_train;
         this->y_train = y_train;
         combine_data();
         this->Max_depth = Max_depth;
-        this->Split_function = Split_function; 
+        this->spliting_fuction = spliting_fuction;
         Node Tree = Node(false, nullptr, nullptr, pair<int,int>(0, X_train.size())); // ! This redeclares Tree instead of initializing the class member
     }
 
@@ -105,7 +104,7 @@ private:
                 new_left_threshold = make_pair(thresholds.first, i-1);
                 new_right_threshold = make_pair(j, thresholds.second);
 
-                gain = Split_function(X_train, new_left_threshold, new_right_threshold); 
+                gain = split_gain(X_train, new_left_threshold, new_right_threshold); 
                 if (gain > best_gain) { // ! This line should be inside the if block
                     best_gain = gain;
                     result.first = new_left_threshold;
@@ -116,15 +115,109 @@ private:
         return result;
     }
 
+
+
+private:
+    double split_gain(vector<vector<string>> X_train, pair<int, int> left_threshold, pair<int, int> right_threshold) {
+        if(spliting_fuction == "Gini"){
+            return Gini(X_train, left_threshold, right_threshold);
+        } 
+        if(spliting_fuction == 'information_gain'){
+            return Information_Gain(X_train, left_threshold, right_threshold);
+        }
+
+    }
+
+
+    double calculate_entropy( pair<int, int> threshold ){
+
+        unordered_map<int, int> class_counts;
+        for (int i = threshold.first; i < threshold.second; i++) {
+            class_counts[y_train[i]]= 0;
+        }
+
+        for (int i = threshold.first; i < threshold.second; i++) {
+            class_counts[y_train[i]]++;
+        }
+
+        double entropy = 0;
+        for (auto& count : class_counts) {
+            double p_i = count.second / (threshold.second - threshold.first);
+            if (p_i != 0) {
+                entropy -= p_i * log2(p_i);
+            }
+        }
+        return entropy;
+    }
+
+
+    double information_gain(vector<vector<string>> data, pair<int, int> left_threshold, pair<int, int> right_threshold){
+        //!FIX THIS
+
+
+        // Calculate the entropy of the entire dataset
+        double H_S = calculate_entropy(0, make_pair(0, y_train.size()));
+
+        // Calculate the entropy of the left and right datasets
+        double H_S_left = calculate_entropy(0, left_threshold);
+        double H_S_right = calculate_entropy(0, right_threshold);
+
+        // Calculate the average entropy
+        double average_entropy = (left_threshold.second - left_threshold.first) * H_S_left + (right_threshold.second - right_threshold.first) * H_S_right;
+
+        // Calculate the information gain
+        return H_S - average_entropy;
+    }
+
+    double Gini(vector<vector<string>> data, pair<int, int> left_threshold, pair<int, int> right_threshold){
+        // Gini_index= 0 
+        //? Making Class Counts
+        unordered_map<int, int> left_class_counts;
+        unordered_map<int, int> right_class_counts;
+
+        for (int i = left_threshold.first; i < left_threshold.second; i++) {
+            left_class_counts[y_train[i]]= 0;
+        }
+
+        
+        for (int i = left_threshold.first; i < left_threshold.second; i++) {
+            left_class_counts[y_train[i]]++;
+        }
+
+        
+        for (int i = right_threshold.first; i < right_threshold.second; i++) {
+            right_class_counts[y_train[i]]= 0;
+        }
+
+        
+        for (int i = right_threshold.first; i < right_threshold.second; i++) {
+            right_class_counts[y_train[i]]++;
+        }
+        
+        double left_gini = 0;
+        double right_gini = 0;
+        double total_gini = 0;
+
+        for (auto& count : left_class_counts) {
+            left_gini += pow((count.second/left_threshold.second - left_threshold.first), 2);
+        }
+        for (auto& count : right_class_counts) {
+            right_gini += pow((count.second/right_threshold.second - right_threshold.first), 2);
+        }
+
+        return 1.0 - (left_gini + right_gini)
+
+    };
+
 public:
      Eigen::VectorXd predict(vector<vector<string>> X_test){
             // Using the tree we can predict the values of our X_Test
             Eigen :: VectorXd y_test(X_test.size());
 
             for (int i = 0; i < X_test.size(); i++){
-                y_test[i] = stod(predict_recursive(X_test[i], &Tree)); // ! Should be dereferencing Tree correctly
+                y_test[i] = stod(predict_recursive(X_test[i], &Tree)); 
             }
-            return y_test; // ! Missing return statement
+            return y_test; 
     };
 
     string Majority_vote(Node* node) {
@@ -160,6 +253,10 @@ private:
         }
     }
 };
+
+
+
+
 
 /*
 PsuedoCode:

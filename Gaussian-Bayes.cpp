@@ -19,17 +19,18 @@ using namespace std;
 using Document = vector<string>; // Each document is a vector of words
 class GuassianBayes{
 
-    vector<vector<string>> X_train; // Correct type
+    Eigen :: MatrixXd X_train; 
     Eigen::VectorXd y_train;
 
     // this is a hashtable with all the data combined by class, the first key is the class and the second key is a vector of documents and the third key is the document
-    unordered_map<int, vector<vector<string>>> combined_data;
+    unordered_map<int, Eigen:VectorXd > combined_data;
     /*
     Structure:
     {
-        class1: [[this is a doc in a list of docs], [this is a doc in a list of docs], [this is a doc in a list of docs]],
-        class2: [[this is a doc in a list of docs], [this is a doc in a list of docs]], [this is a doc in a list of docs]]],
-        class3: [[this is a doc in a list of docs], [this is a doc in a list of docs], [this is a doc in a list of docs]]
+        class1: [[Feature1_value, Feature2_value, Feature3_value],[Feature1_value, Feature2_value, Feature3_value] ],
+        class2: [[Feature1_value, Feature2_value, Feature3_value],[Feature1_value, Feature2_value, Feature3_value] ],
+        class3: [[Feature1_value, Feature2_value, Feature3_value], [Feature1_value, Feature2_value, Feature3_value]],
+
     }
     */
 
@@ -64,7 +65,7 @@ private:
         for (int i = 0; i < y_train.size(); ++i) {
             int class_ = y_train(i);
             if (combined_data.find(class_) == combined_data.end()) {
-                combined_data[class_] = vector<vector<string>>(); // Initialize vector if not present
+                combined_data[class_] = Eigen:VectorXd; // Initialize vector if not present
             }
             combined_data[class_].push_back(X_train[i]);
         }
@@ -108,25 +109,7 @@ private:
                 vocabulary.insert(word);
             }
         }
-
-
-        //? Structure: mean[Class][feature]
-        unordered_map<int, unordered_map<int, double> mean_y;
-
-        for (auto it = combined_data.begin(); it != combined_data.end(); ++it){
-
-
-            
-        }
-
-
-
-
-
-        unordered_map<int, double> variance_y;
-        unordered_map<int, unordered_map<int, double> P_feature_Class;
-
-
+        
         for (auto it = combined_data.begin(); it != combined_data.end(); ++it) {
             for (int i = 0; i < it->second.size(); i++) {
                 all_feature_counts_by_class[it->first] += it->second[i].size();
@@ -140,6 +123,88 @@ private:
                 }
             }
         }
+
+
+        //? Structure: mean[Class][feature]
+        unordered_map<int, unordered_map<int, double>> mean_y;
+        unordered_map<int, double> overall_mean_y; // Overall mean for each class    
+        for (auto it = combined_data.begin(); it != combined_data.end(); ++it){
+            int class_ = it->first;
+            int count =it->second.size();
+            if(mean_y.find(class_)==mean_y.end()){
+                mean_y[class_] = unordered_map<int,double>;
+            }
+            //?Over here we need to go column by column so we are going to switch i and j
+                for (int i = 0; i < it->second[0].size(); i++) {
+                        for (int j = 0; j < it->second.size(); ++j) {
+                        int feature_ = i;
+                        double sum = 0.0;
+
+                        if (mean_y[class_].find(feature_) == mean_y[class_].end()) {
+                                  mean_y[class_][feature_] = 0;
+                    }                                
+                            sum+= it->second[j][i];       
+
+        }
+         mean_y[class_][feature_] = (1.0/count) * sum;
+                }}
+
+
+        // Calculate the overall mean for each class
+        for (auto it = mean_y.begin(); it != mean_y.end(); ++it) {
+            int class_ = it->first;
+            double sum_means = 0.0;
+            int feature_count = it->second.size();
+            for (auto feature_it = it->second.begin(); feature_it != it->second.end(); ++feature_it) {
+                sum_means += feature_it->second;
+            }
+            overall_mean_y[class_] = sum_means / feature_count;
+        }
+
+
+
+
+
+
+
+        unordered_map<int, unordered_map<int, double>> variance_y; // Variance of each feature for each class
+
+        
+        for (auto it = combined_data.begin(); it != combined_data.end(); ++it){
+            int class_ = it->first;
+            int count =it->second.size();
+            if(variance_y.find(class_)==variance_y.end()){
+                variance_y[class_] = unordered_map<int,double>;
+            }
+            //?Over here we need to go column by column so we are going to switch i and j
+                for (int i = 0; i < it->second[0].size(); i++) {
+                        double sum_of_squares = 0.0;
+                        for (int j = 0; j < it->second.size(); ++j) {    
+                        double x_i= it-> second[j][i]
+
+                    sum_of_squares= x_i*((x_i-mean_y[class_][i])**2);    
+        }
+                }
+                    variance_y[class][i]= sum_of_squares/count;
+                
+                }
+
+
+
+
+
+
+
+
+
+        unordered_map<int, unordered_map<int, double> P_feature_Class;
+
+
+
+
+        
+
+
         
 
 

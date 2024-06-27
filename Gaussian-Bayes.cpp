@@ -5,7 +5,7 @@
 #include <unordered_set>
 #include <vector>
 #include <string>
-
+#include <cmath>
 struct VectorHash {
     size_t operator()(const vector<string>& vec) const {
         size_t hash = 0;
@@ -162,6 +162,21 @@ private:
         }
 
 
+        //?Calculating conditional probability
+        
+
+
+            for (auto it = mean_y.begin(); it != mean_y.end(); ++it) {
+            int class_ = it->first;
+            double sum_means = 0.0;
+            int feature_count = it->second.size();
+            for (auto feature_it = it->second.begin(); feature_it != it->second.end(); ++feature_it) {
+                sum_means += feature_it->second;
+            }
+            overall_mean_y[class_] = sum_means / feature_count;
+        }
+
+        
 
 
 
@@ -182,7 +197,7 @@ private:
                         for (int j = 0; j < it->second.size(); ++j) {    
                         double x_i= it-> second[j][i]
 
-                    sum_of_squares= x_i*((x_i-mean_y[class_][i])**2);    
+            sum_of_squares += pow(x_i - mean_y[class_][i], 2); // Fix the variance calculation
         }
                 }
                     variance_y[class][i]= sum_of_squares/count;
@@ -191,62 +206,48 @@ private:
 
 
 
-
-
-
-
-
+        //?Computing the Conditional Probability
 
         unordered_map<int, unordered_map<int, double> P_feature_Class;
 
+         for (auto it = combined_data.begin(); it != combined_data.end(); ++it) {
+            int class_ = it->first;
+
+            for (int i = 0; i < it->second[0].size(); i++) {
+                int feature_ = i;
+
+                for (int j = 0; j < it->second.size(); ++j) {
+                    double x_i = stod(it->second[j][i]); // Convert string to double
+                    double mean = mean_y[class_][feature_];
+                    double variance = variance_y[class_][feature_];
+                                    if (variance == 0) {
+
+                        probability = (x_i == mean) ? 1.0 : 0.0;
+
+                    } else {
+
+                        probability = (1 / sqrt(2 * M_PI * variance)) * exp(-pow(x_i - mean, 2) / (2 * variance));
+
+                    }
 
 
-
-        
-
-
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        // Calculate the conditional probabilities of each feature
-        for (auto word = vocabulary.begin(); word != vocabulary.end(); ++word) {
-            for (auto it = all_feature_counts_by_class.begin(); it != all_feature_counts_by_class.end(); ++it) {
-                int class_ = it->first;
-                if (P_word_class.find(*word) == P_word_class.end()) {
-                    P_word_class[*word] = unordered_map<int, double>();
+                    if (P_feature_class.find(class_) == P_feature_class.end()) {
+                        P_feature_class[class_] = unordered_map<int, double>();
+                    }
                 }
-                if (P_word_class[*word].find(class_) == P_word_class[*word].end()) {
-                    P_word_class[*word][class_] = 0.0;
-                }
-                P_word_class[*word][class_] = (Words_by_doc_by_class[class_][*word] + 1.0) / (all_feature_counts_by_class[class_] + vocabulary.size());
+
+
+
+                        P_feature_class[class_][feature_] = (1 / sqrt(2 * M_PI * variance)) * exp(-pow(x_i - mean, 2) / (2 * variance));
+
             }
+
+
+
         }
+
+
+
     }
 
 public:
@@ -262,10 +263,10 @@ public:
                 for (int j = 0; j < X_test[i].size(); j++) {
                     string feature = X_test[i][j];
                     //? Since the test set might contain the feature with a class that wasn't in the training set, so we might need to modify and add some stuff to this dictionary
-                 if (P_word_class.find(feature) == P_word_class.end() || P_word_class[feature].find(class_) == P_word_class[feature].end()) {
-                    P_word_class[feature][class_] = 1.0 / (all_feature_counts_by_class[class_] + vocabulary.size());
+                 if (P_feature_class.find(feature) == P_feature_class.end() || P_feature_class[feature].find(class_) == P_feature_class[feature].end()) {
+                    P_feature_class[feature][class_] = 1.0  //? for the condition we did not see this feature in the training set
     }
-                    Predictions_by_class[class_][X_test[i]] *= P_word_class[feature][class_];
+                    Predictions_by_class[class_][X_test[i]] *= P_feature_class[feature][class_];
                 }
                 sum_of_probabilities += Predictions_by_class[class_][X_test[i]];
             }

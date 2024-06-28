@@ -23,6 +23,9 @@ This repository contains implementations of various machine learning algorithms 
     - Information Gain
 5. **Decision Trees (Regression)**
     - Mean Square Error
+6. **Random Forest**
+    - Classification
+    - Regression
 ## Dependencies
 
 - [Eigen](http://eigen.tuxfamily.org/dox/GettingStarted.html) - A C++ template library for linear algebra.

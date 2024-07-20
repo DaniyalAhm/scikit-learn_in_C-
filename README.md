@@ -2,6 +2,8 @@
 
 This repository implements various machine learning algorithms from scratch in C++. The purpose is to understand the inner workings of these algorithms by building them from the ground up.
 
+ <!-- DISPLAY=TRUE -->
+
 ## Implemented Algorithms
 
 ### Linear Regression
